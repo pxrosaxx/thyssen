@@ -1,0 +1,315 @@
+/* =========================================================================
+   Silnik Visual Novel — arkusz stylów
+   - scena utrzymuje proporcje 16:9 i skaluje się proporcjonalnie
+   - jednostki cqw/cqh (container query) sprawiają, że tekst skaluje się
+     razem ze sceną, dzięki czemu identycznie wygląda na PC i na telefonie
+   ========================================================================= */
+
+:root {
+  --kolor-tlo: #0a0a0c;
+  --kolor-okno: rgba(12, 10, 9, 0.86);
+  --kolor-ramka: rgba(120, 100, 70, 0.45);
+  --kolor-tekst: #e8e2d6;
+  --kolor-przycisk: rgba(40, 34, 28, 0.9);
+  --kolor-przycisk-hover: rgba(70, 58, 44, 0.95);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  color: var(--kolor-tekst);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* -------------------------------------------------------------------------
+   Scena 16:9 — letterbox. Bierzemy najmniejszy z wymiarów tak,
+   by całość zmieściła się na ekranie z zachowaniem proporcji.
+   ------------------------------------------------------------------------- */
+.scena {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  background: var(--kolor-tlo);
+  overflow: hidden;
+  /* aktywuje jednostki cqw/cqh dla elementów wewnątrz */
+  container-type: size;
+}
+
+.ukryte { display: none !important; }
+
+/* -------------------------------------------------------------------------
+   Warstwa tła
+   ------------------------------------------------------------------------- */
+.warstwa-tla {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4cqw;
+  letter-spacing: 0.3cqw;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  transition: opacity 0.6s ease;
+  opacity: 1;
+}
+.warstwa-tla.zanikanie { opacity: 0; }
+
+/* -------------------------------------------------------------------------
+   Warstwa postaci — trzy sloty pozycyjne
+   ------------------------------------------------------------------------- */
+.warstwa-postaci {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 6cqw;
+  pointer-events: none;
+}
+.slot-sprite {
+  width: 26cqw;
+  height: 72cqh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+}
+.slot-sprite[data-pos="center"] { align-self: flex-end; }
+
+/* placeholder sprite'a (kolorowe pole z etykietą) */
+.placeholder-sprite {
+  width: 100%;
+  height: 100%;
+  border-radius: 2cqw 2cqw 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 2cqh;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 2.4cqw;
+  text-align: center;
+  box-shadow: 0 0 4cqw rgba(0, 0, 0, 0.6) inset;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  opacity: 0;
+  transform: translateY(3cqh);
+}
+.placeholder-sprite.widoczny { opacity: 1; transform: translateY(0); }
+.placeholder-sprite .etykieta-emocji {
+  font-size: 1.7cqw;
+  opacity: 0.75;
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------------------
+   Okno dialogowe
+   ------------------------------------------------------------------------- */
+.okno-dialogowe {
+  position: absolute;
+  left: 4cqw;
+  right: 4cqw;
+  bottom: 3cqh;
+  min-height: 26cqh;
+  background: var(--kolor-okno);
+  border: 0.2cqw solid var(--kolor-ramka);
+  border-radius: 1cqw;
+  padding: 3cqh 3cqw;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 0.5cqw 3cqw rgba(0, 0, 0, 0.7);
+}
+.imie-mowiacego {
+  font-size: 2.8cqw;
+  font-weight: bold;
+  margin-bottom: 1.5cqh;
+  letter-spacing: 0.1cqw;
+  min-height: 3cqh;
+  text-shadow: 0 0.2cqw 0.4cqw rgba(0, 0, 0, 0.9);
+}
+.tekst-dialogu {
+  font-size: 2.6cqw;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  text-shadow: 0 0.15cqw 0.3cqw rgba(0, 0, 0, 0.9);
+}
+.wskaznik-dalej {
+  position: absolute;
+  right: 2cqw;
+  bottom: 1.5cqh;
+  font-size: 2.2cqw;
+  opacity: 0;
+  animation: pulsowanie 1.1s infinite ease-in-out;
+}
+.wskaznik-dalej.aktywny { opacity: 0.8; }
+@keyframes pulsowanie {
+  0%, 100% { transform: translateY(0); opacity: 0.3; }
+  50% { transform: translateY(0.6cqh); opacity: 0.9; }
+}
+
+/* -------------------------------------------------------------------------
+   Menu wyborów
+   ------------------------------------------------------------------------- */
+.menu-wyborow {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2cqh;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 5;
+}
+.menu-wyborow button {
+  width: 60cqw;
+  padding: 2.2cqh 2cqw;
+  font-size: 2.4cqw;
+  color: var(--kolor-tekst);
+  background: var(--kolor-przycisk);
+  border: 0.2cqw solid var(--kolor-ramka);
+  border-radius: 0.8cqw;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.menu-wyborow button:hover { background: var(--kolor-przycisk-hover); transform: scale(1.02); }
+
+/* -------------------------------------------------------------------------
+   Pasek narzędzi
+   ------------------------------------------------------------------------- */
+.pasek-narzedzi {
+  position: absolute;
+  top: 1.5cqh;
+  right: 2cqw;
+  display: flex;
+  gap: 1cqw;
+  z-index: 6;
+}
+.pasek-narzedzi button {
+  font-size: 1.7cqw;
+  padding: 1cqh 1.4cqw;
+  color: var(--kolor-tekst);
+  background: var(--kolor-przycisk);
+  border: 0.15cqw solid var(--kolor-ramka);
+  border-radius: 0.6cqw;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.1cqw;
+}
+.pasek-narzedzi button:hover { background: var(--kolor-przycisk-hover); }
+.pasek-narzedzi button.wlaczony { background: #6b5a3a; color: #fff; }
+
+/* -------------------------------------------------------------------------
+   Nakładki (menu główne, log, sloty, ustawienia, koniec)
+   ------------------------------------------------------------------------- */
+.ekran-nakladka {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 10;
+  animation: pojawienie 0.4s ease;
+}
+@keyframes pojawienie { from { opacity: 0; } to { opacity: 1; } }
+
+.menu-glowne-tresc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2cqh;
+}
+.tytul-gry {
+  font-size: 7cqw;
+  letter-spacing: 0.4cqw;
+  text-shadow: 0 0.4cqw 1cqw rgba(0, 0, 0, 0.9);
+}
+.podtytul-gry {
+  font-size: 2cqw;
+  opacity: 0.6;
+  margin-bottom: 3cqh;
+  font-style: italic;
+}
+.duzy-przycisk {
+  width: 40cqw;
+  padding: 2cqh 2cqw;
+  font-size: 2.4cqw;
+  color: var(--kolor-tekst);
+  background: var(--kolor-przycisk);
+  border: 0.2cqw solid var(--kolor-ramka);
+  border-radius: 0.8cqw;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s ease;
+}
+.duzy-przycisk:hover { background: var(--kolor-przycisk-hover); }
+
+.okno-nakladki {
+  width: 80cqw;
+  max-height: 86cqh;
+  background: var(--kolor-okno);
+  border: 0.2cqw solid var(--kolor-ramka);
+  border-radius: 1cqw;
+  padding: 3cqh 3cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 2cqh;
+}
+.okno-nakladki h2 { font-size: 3.2cqw; margin-bottom: 1cqh; }
+
+/* Log historii */
+.tresc-log {
+  overflow-y: auto;
+  flex: 1;
+  font-size: 2.1cqw;
+  line-height: 1.5;
+  padding-right: 1cqw;
+}
+.tresc-log .wpis-log { margin-bottom: 1.5cqh; }
+.tresc-log .wpis-log .kto { font-weight: bold; }
+
+/* Sloty zapisu */
+.lista-slotow {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5cqh;
+  overflow-y: auto;
+  flex: 1;
+}
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1cqw;
+  padding: 1.6cqh 2cqw;
+  background: var(--kolor-przycisk);
+  border: 0.15cqw solid var(--kolor-ramka);
+  border-radius: 0.8cqw;
+  cursor: pointer;
+  font-size: 2cqw;
+}
+.slot:hover { background: var(--kolor-przycisk-hover); }
+.slot .slot-opis { display: flex; flex-direction: column; gap: 0.5cqh; text-align: left; }
+.slot .slot-data { font-size: 1.5cqw; opacity: 0.6; }
+.slot .slot-pusty { opacity: 0.5; font-style: italic; }
+
+/* Wiersze ustawień */
+.wiersz-ustawienia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2cqw;
+  font-size: 2.2cqw;
+}
+.wiersz-ustawienia input[type="range"] { width: 45cqw; }

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <!-- UTF-8 jest kluczowe dla polskich znaków w całym interfejsie i fabule -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Silnik Visual Novel</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Wrapper utrzymuje proporcje 16:9 i wyśrodkowuje scenę (letterbox) -->
+  <div id="scena" class="scena">
+
+    <!-- Warstwa tła -->
+    <div id="warstwa-tla" class="warstwa-tla"></div>
+
+    <!-- Warstwa postaci (sprite'y) -->
+    <div id="warstwa-postaci" class="warstwa-postaci">
+      <div class="slot-sprite" data-pos="left"></div>
+      <div class="slot-sprite" data-pos="center"></div>
+      <div class="slot-sprite" data-pos="right"></div>
+    </div>
+
+    <!-- Okno dialogowe -->
+    <div id="okno-dialogowe" class="okno-dialogowe ukryte">
+      <div id="imie-mowiacego" class="imie-mowiacego"></div>
+      <div id="tekst-dialogu" class="tekst-dialogu"></div>
+      <div class="wskaznik-dalej" id="wskaznik-dalej">▼</div>
+    </div>
+
+    <!-- Menu wyborów (nakładane na środek) -->
+    <div id="menu-wyborow" class="menu-wyborow ukryte"></div>
+
+    <!-- Pasek narzędzi (auto / skip / log / zapis / wczytaj / ustawienia) -->
+    <div id="pasek-narzedzi" class="pasek-narzedzi ukryte">
+      <button data-akcja="auto"      title="Auto-odtwarzanie">AUTO</button>
+      <button data-akcja="skip"      title="Pomijanie">SKIP</button>
+      <button data-akcja="log"       title="Historia dialogów">LOG</button>
+      <button data-akcja="zapis"     title="Zapisz grę">ZAPIS</button>
+      <button data-akcja="wczytaj"   title="Wczytaj grę">WCZYTAJ</button>
+      <button data-akcja="ustawienia" title="Ustawienia">USTAW.</button>
+    </div>
+
+    <!-- Menu główne -->
+    <div id="menu-glowne" class="ekran-nakladka">
+      <div class="menu-glowne-tresc">
+        <h1 class="tytul-gry">Ciężar Ciszy</h1>
+        <p class="podtytul-gry">silnik visual novel — przykładowa scena</p>
+        <button data-akcja="nowa-gra" class="duzy-przycisk">Nowa gra</button>
+        <button data-akcja="wczytaj-z-menu" class="duzy-przycisk">Wczytaj</button>
+        <button data-akcja="ustawienia-z-menu" class="duzy-przycisk">Ustawienia</button>
+      </div>
+    </div>
+
+    <!-- Nakładka: log historii -->
+    <div id="nakladka-log" class="ekran-nakladka ukryte">
+      <div class="okno-nakladki">
+        <h2>Historia</h2>
+        <div id="tresc-log" class="tresc-log"></div>
+        <button data-akcja="zamknij-nakladke" class="duzy-przycisk">Zamknij</button>
+      </div>
+    </div>
+
+    <!-- Nakładka: zapis/wczytaj (sloty) -->
+    <div id="nakladka-sloty" class="ekran-nakladka ukryte">
+      <div class="okno-nakladki">
+        <h2 id="tytul-slotow">Zapis</h2>
+        <div id="lista-slotow" class="lista-slotow"></div>
+        <button data-akcja="zamknij-nakladke" class="duzy-przycisk">Zamknij</button>
+      </div>
+    </div>
+
+    <!-- Nakładka: ustawienia -->
+    <div id="nakladka-ustawienia" class="ekran-nakladka ukryte">
+      <div class="okno-nakladki">
+        <h2>Ustawienia</h2>
+
+        <label class="wiersz-ustawienia">
+          <span>Prędkość tekstu</span>
+          <input type="range" id="suwak-predkosc" min="0" max="100" value="60">
+        </label>
+
+        <label class="wiersz-ustawienia">
+          <span>Głośność muzyki (BGM)</span>
+          <input type="range" id="suwak-bgm" min="0" max="100" value="70">
+        </label>
+
+        <label class="wiersz-ustawienia">
+          <span>Głośność efektów (SFX)</span>
+          <input type="range" id="suwak-sfx" min="0" max="100" value="80">
+        </label>
+
+        <button data-akcja="zamknij-nakladke" class="duzy-przycisk">Zamknij</button>
+      </div>
+    </div>
+
+    <!-- Nakładka: ekran zakończenia -->
+    <div id="nakladka-koniec" class="ekran-nakladka ukryte">
+      <div class="menu-glowne-tresc">
+        <h1 id="tekst-konca" class="tytul-gry">Koniec</h1>
+        <button data-akcja="powrot-do-menu" class="duzy-przycisk">Powrót do menu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Moduł startowy ES6 -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+# =========================================================================
+#  CIĘŻAR CISZY — przykładowa scena
+#  Edytuj WYŁĄCZNIE ten plik, aby dopisywać sceny. Nie dotykaj kodu.
+#  Składnia opisana jest w README.md.
+# =========================================================================
+
+# --- Manifest postaci (zamknięty zbiór mówiących) ---
+# "Imię:" uruchamia dialog tylko dla imion zadeklarowanych poniżej.
+@char Halszka color=#c9a86a sprite=halszka
+@char Wojt    color=#9a3b30 sprite=wojt
+
+
+# =========================================================================
+== start ==
+# =========================================================================
+
+@bg izba_noc fade
+@bgm cisza loop
+
+Noc weszła do izby razem z mrozem.
+W ciemności słychać tylko ogień. I oddech.
+
+@show Halszka center zmeczona
+Halszka: Wiem, że nie śpisz.{w} Słyszę, jak liczysz.
+
+@show Wojt left ponury
+Wojt: Liczę dni.{w=1.5} Zostały trzy rzeczy: chleb, sól, zima.
+
+Halszka spojrzała na jego dłonie. Były puste.
+
+Wojt: Jutro przyjdą po dziesięcinę.{w} A my nie mamy nawet na własny grób.
+
+# Wybór gracza — rozgałęzienie + ustawienie zmiennej
+@choice
+  - Skłamać, że ziarno spłonęło -> sciezka_klamstwo
+  - Powiedzieć prawdę: schowaliśmy je -> sciezka_prawda
+
+
+# =========================================================================
+== sciezka_klamstwo ==
+# =========================================================================
+
+Halszka: Powiemy, że ogień zabrał ziarno.{w} Że nie zostało nic.
+
+@set $zaufanie -= 1
+@flag klamstwo
+
+@show Wojt left zly
+Wojt: Kłamstwo karmi raz.{w=1.5} Potem zżera od środka.
+
+@jump rankiem
+
+
+# =========================================================================
+== sciezka_prawda ==
+# =========================================================================
+
+Halszka: Pokażemy im spichlerz.{w} Może litość jest tańsza niż gniew.
+
+@set $zaufanie += 1
+
+@show Wojt left zmiekczony
+Wojt: Litość.{w=1.5} Dawno nie słyszałem tego słowa w tej izbie.
+
+@jump rankiem
+
+
+# =========================================================================
+== rankiem ==
+# =========================================================================
+
+@bg dziedziniec_swit fade
+@sfx dzwon
+
+Świt przyszedł szary, bez obietnic.
+
+# Skok warunkowy zależny od wcześniejszej decyzji
+@if $zaufanie >= 1 -> koniec_dobry
+@if klamstwo -> koniec_zly
+
+# zapasowe zakończenie, gdyby żaden warunek nie zaszedł
+@jump koniec_neutralny
+
+
+# =========================================================================
+== koniec_dobry ==
+# =========================================================================
+Wojt: Spójrz na mnie.{w} Cokolwiek przyjdzie, przyjdzie po nas oboje.
+Halszka: Niech przychodzi.
+@end Razem
+
+
+== koniec_zly ==
+Wojt: Nie patrz tak.{w=2} To kłamstwo było moje. Nie twoje.
+W izbie zrobiło się ciszej niż w grobie.
+@end Ciężar Ciszy
+
+
+== koniec_neutralny ==
+Świt zastał ich milczących, każde po swojej stronie ognia.
+@end Świt
