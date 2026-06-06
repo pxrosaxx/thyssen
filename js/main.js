@@ -47,6 +47,7 @@ async function init() {
     if (!odp.ok) throw new Error(`HTTP ${odp.status}`);
     const tekst = await odp.text(); // fetch dekoduje jako UTF-8
     skrypt = parsujSkrypt(tekst);
+    prezentacja.ustawManifest(skrypt.characters); // konfiguracja animacji per postać
   } catch (e) {
     alert('Nie udało się wczytać fabuły (' + SCIEZKA_FABULY + ').\n' +
           'Uruchom projekt przez lokalny serwer, np.:  python -m http.server\n\n' +

@@ -87,8 +87,21 @@ html, body {
 }
 .slot-sprite[data-pos="center"] { align-self: flex-end; }
 
-/* placeholder sprite'a (kolorowe pole z etykietą) */
+/* Wrapper sprite'a — odpowiada za fade-in i animację wejścia.
+   Animacja oddechu jest na wewnętrznym .sprite-cialo, by transformacje
+   wejścia i oddechu się nie nadpisywały. */
 .placeholder-sprite {
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  opacity: 0;
+  transform: translateY(3cqh);
+}
+.placeholder-sprite.widoczny { opacity: 1; transform: translateY(0); }
+
+/* Ciało sprite'a (kolorowe pole z etykietą) + zapętlona animacja oddechu. */
+.sprite-cialo {
+  position: relative;
   width: 100%;
   height: 100%;
   border-radius: 2cqw 2cqw 0 0;
@@ -101,15 +114,47 @@ html, body {
   font-size: 2.4cqw;
   text-align: center;
   box-shadow: 0 0 4cqw rgba(0, 0, 0, 0.6) inset;
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  opacity: 0;
-  transform: translateY(3cqh);
+  transform-origin: bottom center;
 }
-.placeholder-sprite.widoczny { opacity: 1; transform: translateY(0); }
-.placeholder-sprite .etykieta-emocji {
+.sprite-cialo .etykieta-emocji {
   font-size: 1.7cqw;
   opacity: 0.75;
   font-style: italic;
+}
+
+/* Oddech (idle): delikatne unoszenie + mikrokołysanie.
+   Amplituda/kąt sterowane zmiennymi CSS ustawianymi per postać. */
+@keyframes oddech {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% {
+    transform: translateY(calc(-1 * var(--odd-amp, 1cqh)))
+               rotate(var(--odd-rot, 0.6deg));
+  }
+}
+
+/* Warstwa ust — placeholder CSS (dwie syntetyczne klatki: zamknięte/otwarte). */
+.sprite-usta {
+  width: 12%;
+  height: 1cqh;
+  margin: 1cqh 0;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 0.4cqh;
+  transition: height 0.05s linear, width 0.05s linear, border-radius 0.05s linear;
+}
+.sprite-usta.otwarte {
+  height: 2.6cqh;
+  width: 8%;
+  border-radius: 50%;
+}
+
+/* Warstwa ust — warianty graficzne (gdy podano usta_otwarte/usta_zamkniete). */
+.sprite-usta-img {
+  position: absolute;
+  inset: 0;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  pointer-events: none;
 }
 
 /* -------------------------------------------------------------------------

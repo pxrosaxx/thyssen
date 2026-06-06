@@ -129,14 +129,26 @@ export function parsujSkrypt(zrodlo) {
 
       switch (komenda) {
         case 'char': {
-          // @char Imię color=#hex sprite=klucz   (Imię może być w cudzysłowie)
+          // @char Imię color=#hex sprite=klucz [oddech=on|off] [oddech_amp=1.2]
+          //       [oddech_tempo=3.6] [flap=on|off] [flap_tempo=175]
+          //       [usta_otwarte=ścieżka] [usta_zamkniete=ścieżka]
+          // (Imię może być w cudzysłowie)
           const mNazwa = reszta.match(/^"([^"]+)"|^(\S+)/);
           const imie = mNazwa[1] || mNazwa[2];
-          const atrybuty = parsujAtrybuty(reszta);
+          const a = parsujAtrybuty(reszta);
+          const liczbaLub = (v, dom) => (v !== undefined && !isNaN(parseFloat(v)) ? parseFloat(v) : dom);
           characters[imie] = {
             imie,
-            kolor: atrybuty.color || '#e8e2d6',
-            sprite: atrybuty.sprite || null,
+            kolor: a.color || '#e8e2d6',
+            sprite: a.sprite || null,
+            // --- konfiguracja animacji (z rozsądnymi wartościami domyślnymi) ---
+            oddech: a.oddech !== 'off',                  // domyślnie włączony
+            oddechAmp: liczbaLub(a.oddech_amp, 1.0),     // amplituda (w cqh)
+            oddechTempo: liczbaLub(a.oddech_tempo, 3.6), // okres oddechu (s)
+            flap: a.flap !== 'off',                      // domyślnie włączony
+            flapTempo: liczbaLub(a.flap_tempo, 175),     // tempo flapa ust (ms)
+            ustaOtwarte: a.usta_otwarte || null,
+            ustaZamkniete: a.usta_zamkniete || null,
           };
           break;
         }
@@ -201,6 +213,16 @@ export function parsujSkrypt(zrodlo) {
           const warunek = parsujWarunek(reszta.slice(0, strzalka));
           const cel = reszta.slice(strzalka + 2).trim();
           instructions.push({ typ: 'if', warunek, cel });
+          break;
+        }
+        case 'anim': {
+          // @anim Postac oddech stop|start|szybki|spokojny|normalny|<sekundy>
+          instructions.push({
+            typ: 'anim',
+            postac: slowa[0],
+            wlasciwosc: slowa[1],
+            wartosc: slowa[2],
+          });
           break;
         }
         case 'choice': {

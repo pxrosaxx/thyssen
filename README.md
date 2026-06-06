@@ -76,6 +76,26 @@ zostanie błędnie wzięta za dialog.
 - `sprite` — domyślny klucz sprite'a postaci
 - Imię z spacją ujmij w cudzysłów: `@char "Stary Rycerz" color=#888 sprite=rycerz`
 
+Opcjonalne parametry animacji (rozsądne wartości domyślne, gdy pominięte):
+
+```
+@char Wojt color=#9a3b30 sprite=wojt \
+      oddech=on oddech_amp=1.4 oddech_tempo=3.0 \
+      flap=on flap_tempo=175 \
+      usta_otwarte=assets/sprites/wojt_usta_o.png \
+      usta_zamkniete=assets/sprites/wojt_usta_z.png
+```
+
+- `oddech` — `on` (domyślnie) / `off`: subtelny, zapętlony ruch idle
+- `oddech_amp` — amplituda unoszenia w jednostkach `cqh` (domyślnie `1.0`)
+- `oddech_tempo` — okres jednego oddechu w sekundach (domyślnie `3.6`)
+- `flap` — `on` (domyślnie) / `off`: ruch ust podczas mówienia
+- `flap_tempo` — czas jednej klatki ust w ms (domyślnie `175`)
+- `usta_otwarte` / `usta_zamkniete` — ścieżki do wariantów grafik ust
+
+(Powyższy zapis pokazano z `\` dla czytelności — w pliku fabuły **cały `@char`
+musi być w jednej linii**.)
+
 ### Dialog i narracja
 
 ```
@@ -114,6 +134,36 @@ Halszka: Wiem, co zrobiłeś.{w} I wiem dlaczego.{w=2} Ale to nic nie zmienia.
 @show Wojt left ponury          # pozycje: left / center / right
 @hide Wojt                      # ukryj postać (z fade-out)
 ```
+
+### Animacja postaci
+
+Każdy widoczny sprite **automatycznie oddycha** (idle) i **rusza ustami tylko
+podczas wypisywania swojej kwestii** (flap spięty z maszyną do pisania —
+usta zamykają się natychmiast przy pauzie `{w}`/`{w=N}`, na końcu linii i gdy
+gra czeka na kliknięcie). Domyślne zachowanie konfigurujesz w manifeście
+(`@char`, sekcja wyżej). Nic nie musisz robić w treści scen.
+
+Opcjonalnie możesz **chwilowo nadpisać** animację postaci ze skryptu, by zagrać
+dramaturgią (np. panika vs. martwa cisza):
+
+```
+@anim Wojt oddech szybki     # przyspiesz oddech (panika)
+@anim Wojt oddech spokojny   # zwolnij oddech (ukojenie)
+@anim Wojt oddech stop       # zatrzymaj oddech (postać zamiera)
+@anim Wojt oddech start      # wznów oddech (alias: wznow)
+@anim Wojt oddech normalny   # powrót do tempa z manifestu
+@anim Wojt oddech 2.0        # własny okres oddechu w sekundach
+```
+
+Nadpisania są zapamiętywane w zapisie stanu (po wczytaniu postać oddycha tak
+jak przed zapisem). Ponowne `@show` tej postaci resetuje nadpisania do
+ustawień z manifestu.
+
+> **Ruch ust a grafiki:** na placeholderach (bez assetów) flap jest widoczny
+> jako otwierające się usta rysowane przez CSS, więc można go przetestować od
+> razu. Przy prawdziwych grafikach flap podmienia warianty `usta_otwarte` /
+> `usta_zamkniete`; brak tych wariantów dla grafiki = postać nie rusza ustami
+> (nadal oddycha). Flap można też wyłączyć per postać: `flap=off`.
 
 ### Audio
 
@@ -191,7 +241,8 @@ Każda opcja: `tekst -> etykieta`. Opcję można warunkowo ukryć:
 
 - **Save/Load** — wiele slotów w `localStorage`. Zapis obejmuje pełny stan:
   pozycję w skrypcie, wszystkie zmienne i flagi, aktualne tło, aktywne sprite'y
-  z pozycjami, aktualną muzykę, log historii oraz ostatnio wyświetlaną linię.
+  z pozycjami i nadpisaniami animacji (`@anim`), aktualną muzykę, log historii
+  oraz ostatnio wyświetlaną linię.
   Po wczytaniu ekran wygląda dokładnie tak jak przed zapisem.
 - **Log / historia** — przewijalna lista wszystkich wypowiedzi.
 - **Auto** — automatyczne przewijanie dialogów.

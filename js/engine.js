@@ -162,6 +162,10 @@ export class Silnik {
         this.flagi[instr.nazwa] = instr.wartosc;
         return false;
 
+      case 'anim':
+        this.zastosujAnim(instr);
+        return false;
+
       case 'if':
         if (this.ocenWarunek(instr.warunek)) this.skoczDo(instr.cel);
         return false;
@@ -211,6 +215,21 @@ export class Silnik {
       default:   nowa = aktualna;
     }
     this.zmienne[instr.nazwa] = nowa;
+  }
+
+  /* Stosuje @anim: nadpisuje stan animacji żywego sprite'a ORAZ zapisuje
+     nadpisanie w stanie sprite'a, by zapis/wczytanie je odtworzyły. */
+  zastosujAnim(instr) {
+    const s = this.sprites[instr.postac];
+    if (s && instr.wlasciwosc === 'oddech') {
+      s.anim = s.anim || { oddech: 'run', tempo: null };
+      const w = instr.wartosc;
+      if (w === 'stop') s.anim.oddech = 'stop';
+      else if (w === 'start' || w === 'wznow') s.anim.oddech = 'run';
+      else if (w === 'normalny') { s.anim.oddech = 'run'; s.anim.tempo = null; }
+      else s.anim.tempo = w; // 'szybki' | 'spokojny' | liczba (sekundy)
+    }
+    this.present.sterujAnimacja(instr.postac, instr.wlasciwosc, instr.wartosc);
   }
 
   ocenWarunek(warunek) {

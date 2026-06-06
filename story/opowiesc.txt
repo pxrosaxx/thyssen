@@ -6,8 +6,9 @@
 
 # --- Manifest postaci (zamknięty zbiór mówiących) ---
 # "Imię:" uruchamia dialog tylko dla imion zadeklarowanych poniżej.
-@char Halszka color=#c9a86a sprite=halszka
-@char Wojt    color=#9a3b30 sprite=wojt
+# Opcjonalne parametry animacji: oddech_amp (amplituda), oddech_tempo (okres s).
+@char Halszka color=#c9a86a sprite=halszka oddech_amp=0.9 oddech_tempo=4.2
+@char Wojt    color=#9a3b30 sprite=wojt    oddech_amp=1.4 oddech_tempo=3.0
 
 
 # =========================================================================
@@ -46,6 +47,8 @@ Halszka: Powiemy, że ogień zabrał ziarno.{w} Że nie zostało nic.
 @flag klamstwo
 
 @show Wojt left zly
+# panika podnosi tempo oddechu
+@anim Wojt oddech szybki
 Wojt: Kłamstwo karmi raz.{w=1.5} Potem zżera od środka.
 
 @jump rankiem
@@ -60,6 +63,8 @@ Halszka: Pokażemy im spichlerz.{w} Może litość jest tańsza niż gniew.
 @set $zaufanie += 1
 
 @show Wojt left zmiekczony
+# spokój zwalnia oddech
+@anim Wojt oddech spokojny
 Wojt: Litość.{w=1.5} Dawno nie słyszałem tego słowa w tej izbie.
 
 @jump rankiem
@@ -92,6 +97,8 @@ Halszka: Niech przychodzi.
 
 == koniec_zly ==
 Wojt: Nie patrz tak.{w=2} To kłamstwo było moje. Nie twoje.
+# postać zamiera — oddech zatrzymany dla efektu ciszy
+@anim Wojt oddech stop
 W izbie zrobiło się ciszej niż w grobie.
 @end Ciężar Ciszy
 
