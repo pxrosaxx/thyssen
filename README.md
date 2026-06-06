@@ -32,14 +32,22 @@ a następnie otwórz w przeglądarce: <http://localhost:8000>
 ├── css/
 │   └── style.css           # layout 16:9, okno dialogowe, menu, przejścia fade
 ├── js/
-│   ├── main.js             # bootstrap: wczytanie fabuły fetchem, spięcie UI
-│   ├── parser.js           # interpreter mini-języka scenariusza (.txt)
-│   ├── engine.js           # maszyna stanów: flagi, zmienne, branching, audio
+│   ├── main.js             # bootstrap: filary, wczytanie fabuły fetchem, UI
+│   ├── parser.js           # rdzeń parsera (struktura: say/etykiety/wybór)
+│   ├── engine.js           # maszyna stanów: pętla, stan, branching, zdarzenia
 │   ├── presentation.js     # render: tła, sprite'y, typewriter, wybory, fade
 │   ├── audio.js            # menedżer audio (kanały BGM i SFX)
 │   ├── save.js             # save/load wielosłotowy (localStorage)
 │   ├── history.js          # log / historia dialogów
-│   └── settings.js         # ustawienia (prędkość tekstu, głośności)
+│   ├── settings.js         # ustawienia (prędkość tekstu, głośności)
+│   ├── core/               # filary architektury rozszerzeń
+│   │   ├── bus.js          #   magistrala zdarzeń (Event Bus)
+│   │   ├── registry.js     #   rejestr komend (Command Registry)
+│   │   └── parser-utils.js #   pomocniki parsera (segmenty, warunki, atrybuty)
+│   ├── commands/
+│   │   └── builtins.js     # wbudowane @-komendy (parsowanie + wykonanie)
+│   └── modules/
+│       └── przyklad-wtyczka.js  # moduł-próbka (dowód wtyczkowości)
 ├── story/
 │   └── opowiesc.txt        # FABUŁA — tutaj piszesz sceny
 └── assets/
@@ -266,3 +274,25 @@ Każda opcja: `tekst -> etykieta`. Opcję można warunkowo ukryć:
   sceną.
 - Kodowanie **UTF-8** jest spójne na całej drodze: plik `.txt` → `fetch` →
   `<meta charset="utf-8">`, więc polskie znaki nie rozsypią się.
+
+---
+
+## Architektura rozszerzeń (dla programistów)
+
+Silnik jest budowany jako platforma rozszerzalna. Nowe systemy wpinają się w
+rdzeń przez dwa filary, bez modyfikowania `engine.js` ani `parser.js`:
+
+- **Magistrala zdarzeń** (`core/bus.js`) — silnik emituje zdarzenia cyklu życia
+  (`onStart`, `onLabel`, `onLineShown`, `onBgChange`, `onChoiceShown`,
+  `onChoiceMade`, `onStateChange`, `onEnd`); moduły tylko nasłuchują.
+- **Rejestr komend** (`core/registry.js`) — każda `@`-komenda jest rejestrowana
+  z parą `parsuj` (tekst → instrukcja) i `wykonaj` (instrukcja → efekt). Parser
+  i silnik delegują do rejestru zamiast trzymać twardo zaszyte `switch`.
+
+Moduł to plik w `js/modules/` z metodą `zainstaluj({ rejestr, bus })`. Dodanie
+nowego systemu = dopisanie modułu do listy `MODULY` w `js/main.js`. Przykład:
+`modules/przyklad-wtyczka.js` rejestruje komendę `@echo` i nasłuchuje zdarzeń
+(loguje do konsoli DevTools — nie wpływa na rozgrywkę).
+
+> To fundament pod kolejne etapy platformy (rozbudowany stan, bogatsze wybory,
+> dziennik, kodeks, galeria, śledzenie zakończeń) — każdy jako osobny moduł.

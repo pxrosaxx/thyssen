@@ -5,23 +5,30 @@
    flagi i zmienne, obsługuje branching, etykiety, wybory i audio.
    Wejście gracza (kliknięcia) jest centralizowane tutaj — prezentacja
    pożycza z niego prymitywy oczekiwania (sleepLubKlik / czekajNaKlik).
+
+   Po Fazie 0 silnik NIE zawiera już switcha po typach instrukcji — wykonanie
+   każdej instrukcji deleguje do REJESTRU komend, a w punktach cyklu życia
+   emituje zdarzenia na MAGISTRALI (bus). Metody pomocnicze (skoczDo,
+   zastosujSet, ocenWarunek, zastosujAnim, pokazWybory) zostają tutaj, bo
+   korzystają z nich wykonawcy komend.
    ========================================================================= */
 
-import { predkoscNaOpoznienie } from './settings.js';
-
 export class Silnik {
-  constructor({ skrypt, prezentacja, audio, historia, ustawienia, naKoniec, naZmianeStanu }) {
+  constructor({ skrypt, prezentacja, audio, historia, ustawienia, rejestr, bus, naKoniec, naZmianeStanu }) {
     this.instructions = skrypt.instructions;
     this.labels = skrypt.labels;
     this.present = prezentacja;
     this.audio = audio;
     this.historia = historia;
     this.ustawienia = ustawienia;
+    this.rejestr = rejestr;               // rejestr komend (wykonawcy)
+    this.bus = bus;                       // magistrala zdarzeń
     this.naKoniec = naKoniec;             // callback: pokaż ekran zakończenia
     this.naZmianeStanu = naZmianeStanu;   // callback: aktualizuj przyciski auto/skip
 
     // Stan rozgrywki (to ląduje w zapisie)
     this.pc = 0;                  // program counter
+    this.aktualnyIndeks = 0;     // indeks instrukcji aktualnie wykonywanej
     this.etykieta = '';          // ostatnia etykieta (informacyjnie)
     this.zmienne = {};           // $zmienne liczbowe
     this.flagi = {};             // flagi (bool)
@@ -93,6 +100,7 @@ export class Silnik {
     this.widok = null;
     this.historia.wyczysc();
     this.present.wyczyscSprites();
+    this.bus.emit('onStart');
     this.uruchom();
   }
 
@@ -111,96 +119,14 @@ export class Silnik {
     if (this.dziala) return;
     this.dziala = true;
     while (this.dziala && this.pc < this.instructions.length) {
+      this.aktualnyIndeks = this.pc;
       const instr = this.instructions[this.pc];
       this.pc++;
-      const koniec = await this.wykonaj(instr);
+      // Wykonanie instrukcji deleguje do rejestru komend (Filar B).
+      const koniec = await this.rejestr.wykonaj(instr, this);
       if (koniec) break; // np. @end albo @choice wstrzymują pętlę
     }
     this.dziala = false;
-  }
-
-  /* Wykonuje pojedynczą instrukcję. Zwraca true, gdy pętla ma się zatrzymać. */
-  async wykonaj(instr) {
-    switch (instr.typ) {
-      case 'label':
-        this.etykieta = instr.nazwa;
-        return false;
-
-      case 'bg':
-        this.tlo = instr.nazwa;
-        await this.present.ustawTlo(instr.nazwa, this.trybSkip ? 'cut' : instr.przejscie);
-        return false;
-
-      case 'show':
-        this.sprites[instr.postac] = { pozycja: instr.pozycja, emocja: instr.emocja };
-        this.present.pokazSprite(instr.postac, instr.pozycja, instr.emocja);
-        return false;
-
-      case 'hide':
-        delete this.sprites[instr.postac];
-        this.present.ukryjSprite(instr.postac);
-        return false;
-
-      case 'bgm':
-        if (instr.stop) this.audio.stopBgm();
-        else this.audio.graBgm(instr.nazwa);
-        return false;
-
-      case 'sfx':
-        if (!this.trybSkip) this.audio.graSfx(instr.nazwa);
-        return false;
-
-      case 'wait':
-        if (!this.trybSkip) await this.sleepLubKlik(instr.sekundy * 1000);
-        return false;
-
-      case 'set':
-        this.zastosujSet(instr);
-        return false;
-
-      case 'flag':
-        this.flagi[instr.nazwa] = instr.wartosc;
-        return false;
-
-      case 'anim':
-        this.zastosujAnim(instr);
-        return false;
-
-      case 'if':
-        if (this.ocenWarunek(instr.warunek)) this.skoczDo(instr.cel);
-        return false;
-
-      case 'jump':
-        this.skoczDo(instr.cel);
-        return false;
-
-      case 'say': {
-        const ctx = {
-          opoznienie: predkoscNaOpoznienie(this.ustawienia.predkoscTekstu),
-          trybSkip: this.trybSkip,
-          sleepLubKlik: (ms) => this.sleepLubKlik(ms),
-          czekajNaKlik: () => this.czekajNaKlik(),
-        };
-        const tekst = await this.present.wyswietlLinie(instr, ctx);
-        this.widok = { mowiacy: instr.mowiacy, kolor: instr.kolor, tekst };
-        this.historia.dodaj(instr.mowiacy, tekst);
-        await this.czekajNaPostep();
-        return false;
-      }
-
-      case 'choice':
-        this.pokazWybory(instr.opcje);
-        return true; // pętla wstrzymana do wyboru gracza
-
-      case 'end':
-        this.dziala = false;
-        this.naKoniec?.(instr.nazwa);
-        return true;
-
-      default:
-        console.warn('Nieznana instrukcja:', instr);
-        return false;
-    }
   }
 
   zastosujSet(instr) {
@@ -253,8 +179,11 @@ export class Silnik {
   pokazWybory(opcje) {
     // odfiltruj opcje, których warunek widoczności nie jest spełniony
     const widoczne = opcje.filter(o => !o.warunek || this.ocenWarunek(o.warunek));
+    this.bus.emit('onChoiceShown', widoczne);
     this.present.pokazWybory(widoczne, (idx) => {
-      this.skoczDo(widoczne[idx].cel);
+      const wybrana = widoczne[idx];
+      this.bus.emit('onChoiceMade', wybrana);
+      this.skoczDo(wybrana.cel);
       this.uruchom();
     });
   }

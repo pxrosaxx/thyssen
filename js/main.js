@@ -13,8 +13,17 @@ import { Historia } from './history.js';
 import { Silnik } from './engine.js';
 import { wczytajUstawienia, zapiszUstawienia } from './settings.js';
 import { zapiszStan, wczytajStan, listaSlotow } from './save.js';
+// --- Filary architektury (Faza 0) ---
+import { Bus } from './core/bus.js';
+import { Rejestr } from './core/registry.js';
+import { zarejestrujWbudowane } from './commands/builtins.js';
+// --- Moduły wtyczkowe (dokładane do listy) ---
+import przykladWtyczka from './modules/przyklad-wtyczka.js';
 
 const SCIEZKA_FABULY = 'story/opowiesc.txt';
+
+// Lista aktywnych modułów — kolejne systemy dopisuje się tutaj.
+const MODULY = [przykladWtyczka];
 
 let silnik = null;
 let prezentacja = null;
@@ -22,6 +31,8 @@ let audio = null;
 let historia = null;
 let ustawienia = null;
 let skrypt = null;
+let bus = null;
+let rejestr = null;
 
 /* Skróty do elementów DOM */
 const $ = (id) => document.getElementById(id);
@@ -41,12 +52,18 @@ async function init() {
   audio.ustawGlosnoscSfx(ustawienia.glosnoscSfx);
   historia = new Historia();
 
+  // Filary: magistrala zdarzeń + rejestr komend.
+  bus = new Bus();
+  rejestr = new Rejestr();
+  zarejestrujWbudowane(rejestr);              // wbudowane @-komendy
+  for (const mod of MODULY) mod.zainstaluj({ rejestr, bus }); // moduły wtyczkowe
+
   // Wczytanie surowego pliku fabuły (UTF-8) i parsowanie
   try {
     const odp = await fetch(SCIEZKA_FABULY);
     if (!odp.ok) throw new Error(`HTTP ${odp.status}`);
     const tekst = await odp.text(); // fetch dekoduje jako UTF-8
-    skrypt = parsujSkrypt(tekst);
+    skrypt = parsujSkrypt(tekst, rejestr);     // parsowanie korzysta z rejestru
     prezentacja.ustawManifest(skrypt.characters); // konfiguracja animacji per postać
   } catch (e) {
     alert('Nie udało się wczytać fabuły (' + SCIEZKA_FABULY + ').\n' +
@@ -61,6 +78,8 @@ async function init() {
     audio,
     historia,
     ustawienia,
+    rejestr,
+    bus,
     naKoniec: pokazKoniec,
     naZmianeStanu: odswiezPrzyciskiTrybow,
   });
